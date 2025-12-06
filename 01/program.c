@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <string.h>
+#include <limits.h>
 #include <errno.h>
 #include <stdlib.h>
 #include "program.h"
@@ -55,13 +57,25 @@ static unsigned int turn(unsigned int* current, char direction, unsigned int dis
 //***************************************
 // Exported functions (see header file)
 
-unsigned int first(unsigned int start_position, const char buffer[MAX_LINES][MAX_LINE_LENGTH], unsigned int line_count) {
+unsigned int first(unsigned int start_position, char **buffer, unsigned int line_count) {
   unsigned int password = 0;
 
   for (unsigned int i = 0; i < line_count; i++) {
+    if (strcmp(buffer[i], "") == 0) { // Empty string
+      printf("Empty line... skipping!");
+      continue;
+    }
+    unsigned int len = strlen(buffer[i]);
+    if (len < 2) {
+      printf("Invalid line: '%s'", buffer[i]);
+      continue;
+    }
     char direction = buffer[i][0];
-    unsigned int clicks = strtoul(&buffer[i][1], NULL, 10);
-    if (clicks == 0) // If invalid input or input said 'zero clicks'
+    errno = 0;
+    unsigned int clicks = (unsigned int) strtoul(&buffer[i][1], NULL, 10);
+    if (clicks == 0) // If invalid input or input said 'zero clicks', skip
+      continue;
+    if (clicks == UINT_MAX && errno == ERANGE) // If value overflows (we only expect UINT in input), skip
       continue;
     //printf("POS: %d, DIR: %c, CLICKS: %d\r\n", start_position, direction, clicks);
     turn(&start_position, direction, clicks);
@@ -71,13 +85,25 @@ unsigned int first(unsigned int start_position, const char buffer[MAX_LINES][MAX
   return password;
 }
 
-unsigned int second(unsigned int start_position, const char buffer[MAX_LINES][MAX_LINE_LENGTH], unsigned int line_count) {
+unsigned int second(unsigned int start_position, char **buffer, unsigned int line_count) {
   unsigned int password = 0;
 
   for (unsigned int i = 0; i < line_count; i++) {
+    if (strcmp(buffer[i], "") == 0) { // Empty string
+      printf("Empty line... skipping!");
+      continue;
+    }
+    unsigned int len = strlen(buffer[i]);
+    if (len < 2) {
+      printf("Invalid line: '%s'", buffer[i]);
+      continue;
+    }
     char direction = buffer[i][0];
+    errno = 0;
     unsigned int clicks = strtoul(&buffer[i][1], NULL, 10);
-    if (clicks == 0) // If invalid input or input said 'zero clicks'
+    if (clicks == 0) // If invalid input or input said 'zero clicks', skip
+      continue;
+    if (clicks == UINT_MAX && errno == ERANGE) // If value overflows (we only expect UINT in input), skip
       continue;
     //printf("POS: %d, DIR: %c, CLICKS: %d\r\n", start_position, direction, clicks);
     password += turn(&start_position, direction, clicks);
